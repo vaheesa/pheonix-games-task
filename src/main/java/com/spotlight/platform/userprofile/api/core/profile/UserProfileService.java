@@ -37,11 +37,11 @@ public class UserProfileService {
                 break;
             case "increment":
                 existingUserProfile=userProfileDao.get(userId).orElseThrow(EntityNotFoundException::new);
-                userProfile=incrementProperty(userId,commandProfileUserProperties,existingUserProfile);
+                userProfile=incrementProperty(commandProfileUserProperties,existingUserProfile);
                 break;
             case "collect":
                 existingUserProfile=userProfileDao.get(userId).orElseThrow(EntityNotFoundException::new);
-                userProfile=collectProperty(userId,commandProfileUserProperties,existingUserProfile);
+                userProfile=collectProperty(commandProfileUserProperties,existingUserProfile);
                 break;
         }
 
@@ -53,7 +53,7 @@ public class UserProfileService {
 
         return new UserProfile(userId, Instant.now(), commandProfileUserProperties);
     }
-    private UserProfile incrementProperty(UserId userId,Map<UserProfilePropertyName,UserProfilePropertyValue> commandProfileUserProperties,UserProfile existingUserProfile){
+    private UserProfile incrementProperty(Map<UserProfilePropertyName,UserProfilePropertyValue> commandProfileUserProperties,UserProfile existingUserProfile){
 
         for (UserProfilePropertyName key : commandProfileUserProperties.keySet()) {
             existingUserProfile.userProfileProperties().merge(key, commandProfileUserProperties.get(key),(v1, v2) -> {
@@ -64,20 +64,18 @@ public class UserProfileService {
         return existingUserProfile;
     }
 
-    private UserProfile collectProperty(UserId userId,Map<UserProfilePropertyName,UserProfilePropertyValue> commandProfileUserProperties,UserProfile existingUserProfile){
-        List<UserProfilePropertyValue> values1 = new ArrayList<>();
-        List<UserProfilePropertyValue> values2 = new ArrayList<>();
+    private UserProfile collectProperty(Map<UserProfilePropertyName,UserProfilePropertyValue> commandProfileUserProperties,UserProfile existingUserProfile){
+
         for (UserProfilePropertyName key : existingUserProfile.userProfileProperties().keySet()) {
+            List<UserProfilePropertyValue> values1 = new ArrayList<>();
+            List<UserProfilePropertyValue> values2 = new ArrayList<>();
              values1.add(existingUserProfile.userProfileProperties().get(key));
              values2.add(commandProfileUserProperties.get(key)) ;
-        }
-        for (UserProfilePropertyValue value : values2) {
-            values1.add(value);
-        }
+             values1.addAll(values2);
             UserProfilePropertyValue userProfilePropertyValue = UserProfilePropertyValue.valueOf(values1);
-        for (UserProfilePropertyName key : existingUserProfile.userProfileProperties().keySet()) {
             existingUserProfile.userProfileProperties().put(key, userProfilePropertyValue);
         }
+
         return existingUserProfile;
     }
 }
